@@ -169,6 +169,13 @@
       color: #4f3a29;
     }
 
+    .advanced summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 750;
+      padding: 4px 0;
+    }
+
     button {
       border: 0;
       border-radius: 6px;
@@ -303,44 +310,70 @@
               <input id="flour" type="number" min="100" max="5000" step="10" value="500">
             </label>
             <label>
-              Suma mieszanki
-              <input id="mixTotal" type="text" value="100%" readonly>
+              Jaką masz bazę mąk?
+              <select id="flourPreset"></select>
             </label>
           </div>
-          <div class="flour-mix">
-            <p class="mini-title">Mieszanka mąk (% całej mąki)</p>
-            <div class="grid-2">
+          <details class="advanced">
+            <summary>Mąki dokładnie</summary>
+            <div class="flour-mix">
+              <p class="mini-title">Udział mąk. Jeśli nie wiesz, zostaw preset powyżej.</p>
               <label>
-                Pszenna chlebowa jasna
-                <input id="flourWhite" type="number" min="0" max="100" step="1" value="70">
+                Suma mieszanki
+                <input id="mixTotal" type="text" value="100%" readonly>
               </label>
+              <div class="grid-2">
+                <label>
+                  Pszenna chlebowa jasna
+                  <input id="flourWhite" type="number" min="0" max="100" step="1" value="70">
+                </label>
+                <label>
+                  Pszenna chlebowa razowa
+                  <input id="flourWhole" type="number" min="0" max="100" step="1" value="0">
+                </label>
+              </div>
+              <div class="grid-2">
+                <label>
+                  Żytnia jasna
+                  <input id="flourRyeLight" type="number" min="0" max="100" step="1" value="30">
+                </label>
+                <label>
+                  Żytnia razowa
+                  <input id="flourRyeWhole" type="number" min="0" max="100" step="1" value="0">
+                </label>
+              </div>
               <label>
-                Pszenna chlebowa razowa
-                <input id="flourWhole" type="number" min="0" max="100" step="1" value="0">
+                Orkiszowa
+                <input id="flourSpelt" type="number" min="0" max="100" step="1" value="0">
               </label>
             </div>
-            <div class="grid-2">
-              <label>
-                Żytnia jasna
-                <input id="flourRyeLight" type="number" min="0" max="100" step="1" value="30">
-              </label>
-              <label>
-                Żytnia razowa
-                <input id="flourRyeWhole" type="number" min="0" max="100" step="1" value="0">
-              </label>
-            </div>
+          </details>
+          <div class="grid-2">
             <label>
-              Orkiszowa
-              <input id="flourSpelt" type="number" min="0" max="100" step="1" value="0">
+              Jakie ciasto?
+              <select id="doughFeel">
+                <option value="safe">łatwe do prowadzenia</option>
+                <option value="soft">bardziej miękkie i wilgotne</option>
+                <option value="open">luźne, mocniej nawodnione</option>
+              </select>
+            </label>
+            <label>
+              Hydracja, jeśli chcesz poprawić (%)
+              <input id="hydration" type="number" min="45" max="115" step="1">
             </label>
           </div>
           <div class="grid-2">
             <label>
-              Hydracja docelowa (%)
-              <input id="hydration" type="number" min="45" max="115" step="1">
+              Wzbogacenie
+              <select id="enrichmentPreset">
+                <option value="0">brak</option>
+                <option value="8">lekko: odrobina tłuszczu/cukru</option>
+                <option value="25">słodkie / maślane</option>
+                <option value="custom">własne</option>
+              </select>
             </label>
             <label>
-              Tłuszcz/cukier wzbogacenie (%)
+              Tłuszcz/cukier/jajka, jeśli chcesz poprawić (%)
               <input id="enrichment" type="number" min="0" max="45" step="1">
             </label>
           </div>
@@ -348,27 +381,34 @@
 
         <fieldset>
           <legend>Zakwasy, levain i zaczyny</legend>
-          <div class="preferment-mix">
-            <p class="mini-title">Mieszanka zaczynów. Procent oznacza mąkę z całej mąki w cieście.</p>
-            <div class="preferment-row">
-              <select id="pref1Type"></select>
-              <input id="pref1FlourPct" type="number" min="0" max="60" step="1" value="25" aria-label="Mąka w zaczynie 1">
-              <input id="pref1Hydration" type="number" min="45" max="125" step="1" value="100" aria-label="Hydracja zaczynu 1">
+          <label>
+            Co masz / czego chcesz użyć?
+            <select id="prefermentPreset"></select>
+          </label>
+          <details class="advanced">
+            <summary>Zaczyny dokładnie</summary>
+            <div class="preferment-mix">
+              <p class="mini-title">Każdy wiersz to osobny zakwas, levain, biga albo poolish.</p>
+              <div class="preferment-row">
+                <select id="pref1Type"></select>
+                <input id="pref1FlourPct" type="number" min="0" max="60" step="1" value="25" aria-label="Mąka w zaczynie 1">
+                <input id="pref1Hydration" type="number" min="45" max="125" step="1" value="100" aria-label="Hydracja zaczynu 1">
+              </div>
+              <div class="preferment-row">
+                <select id="pref2Type"></select>
+                <input id="pref2FlourPct" type="number" min="0" max="60" step="1" value="0" aria-label="Mąka w zaczynie 2">
+                <input id="pref2Hydration" type="number" min="45" max="125" step="1" value="100" aria-label="Hydracja zaczynu 2">
+              </div>
+              <div class="preferment-row">
+                <select id="pref3Type"></select>
+                <input id="pref3FlourPct" type="number" min="0" max="60" step="1" value="0" aria-label="Mąka w zaczynie 3">
+                <input id="pref3Hydration" type="number" min="45" max="125" step="1" value="50" aria-label="Hydracja zaczynu 3">
+              </div>
+              <div class="preferment-head">
+                <span>typ</span><span>mąka %</span><span>hydracja %</span>
+              </div>
             </div>
-            <div class="preferment-row">
-              <select id="pref2Type"></select>
-              <input id="pref2FlourPct" type="number" min="0" max="60" step="1" value="0" aria-label="Mąka w zaczynie 2">
-              <input id="pref2Hydration" type="number" min="45" max="125" step="1" value="100" aria-label="Hydracja zaczynu 2">
-            </div>
-            <div class="preferment-row">
-              <select id="pref3Type"></select>
-              <input id="pref3FlourPct" type="number" min="0" max="60" step="1" value="0" aria-label="Mąka w zaczynie 3">
-              <input id="pref3Hydration" type="number" min="45" max="125" step="1" value="50" aria-label="Hydracja zaczynu 3">
-            </div>
-            <div class="preferment-head">
-              <span>typ</span><span>mąka %</span><span>hydracja %</span>
-            </div>
-          </div>
+          </details>
           <label>
             Siła fermentacji
             <select id="starterStrength">
@@ -474,6 +514,16 @@
       flourRyeWhole: { label: "żytnia razowa", waterAdj: 14, timeAdj: 0.8, note: "bardzo chłonna, ciasto bardziej pastowate" }
     };
 
+    const flourPresets = {
+      everyday: { label: "uniwersalnie: pszenna + trochę żytniej", values: { flourWhite: 70, flourWhole: 0, flourRyeLight: 30, flourRyeWhole: 0, flourSpelt: 0 } },
+      white: { label: "głównie pszenna jasna", values: { flourWhite: 100, flourWhole: 0, flourRyeLight: 0, flourRyeWhole: 0, flourSpelt: 0 } },
+      wheatWhole: { label: "pszenna jasna + razowa", values: { flourWhite: 60, flourWhole: 40, flourRyeLight: 0, flourRyeWhole: 0, flourSpelt: 0 } },
+      rye: { label: "bardziej żytni", values: { flourWhite: 30, flourWhole: 0, flourRyeLight: 70, flourRyeWhole: 0, flourSpelt: 0 } },
+      rustic: { label: "rustykalnie: pszenna, razowa i żytnia", values: { flourWhite: 50, flourWhole: 25, flourRyeLight: 25, flourRyeWhole: 0, flourSpelt: 0 } },
+      spelt: { label: "z orkiszem", values: { flourWhite: 50, flourWhole: 0, flourRyeLight: 0, flourRyeWhole: 0, flourSpelt: 50 } },
+      custom: { label: "własna mieszanka", values: null }
+    };
+
     const prefermentTypes = {
       sourdough100: { label: "zakwas 100%", hyd: 100, yeast: false, note: "klasyczny zakwas pszenny lub żytni" },
       stiffSourdough: { label: "sztywny zakwas / lievito madre", hyd: 50, yeast: false, note: "łagodniejszy profil, dobry do słodkich ciast" },
@@ -484,14 +534,47 @@
       none: { label: "bez zaczynu", hyd: 0, yeast: false, note: "liczy tylko ciasto właściwe" }
     };
 
+    const prefermentPresets = {
+      oneSourdough: { label: "jeden aktywny zakwas", rows: [["sourdough100", 25, 100], ["none", 0, 100], ["none", 0, 50]] },
+      mixedSourdough: { label: "mieszanka: zakwas żytni + levain", rows: [["ryeSourdough", 15, 100], ["levain", 15, 100], ["none", 0, 50]] },
+      stiffSweet: { label: "łagodny sztywny zakwas do słodkich", rows: [["stiffSourdough", 18, 50], ["none", 0, 100], ["none", 0, 50]] },
+      poolish: { label: "poolish drożdżowy", rows: [["poolish", 30, 100], ["none", 0, 100], ["none", 0, 50]] },
+      biga: { label: "biga drożdżowa", rows: [["biga", 30, 50], ["none", 0, 100], ["none", 0, 50]] },
+      none: { label: "bez zaczynu", rows: [["none", 0, 100], ["none", 0, 100], ["none", 0, 50]] },
+      custom: { label: "własne zaczyny", rows: null }
+    };
+
     const flourMixIds = Object.keys(flourTypes);
     const prefermentRows = [1, 2, 3];
     const prefermentIds = prefermentRows.flatMap(n => [`pref${n}Type`, `pref${n}FlourPct`, `pref${n}Hydration`]);
-    const ids = ["product", "flour", "mixTotal", ...flourMixIds, "hydration", "enrichment", ...prefermentIds, "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
+    const ids = ["product", "flour", "flourPreset", "mixTotal", ...flourMixIds, "doughFeel", "hydration", "enrichmentPreset", "enrichment", "prefermentPreset", ...prefermentIds, "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
     const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
 
     function optionList(select, data) {
       select.innerHTML = Object.entries(data).map(([value, item]) => `<option value="${value}">${item.label}</option>`).join("");
+    }
+
+    function setFlourPreset(key) {
+      const preset = flourPresets[key];
+      if (!preset || !preset.values) return;
+      Object.entries(preset.values).forEach(([id, value]) => { el[id].value = value; });
+    }
+
+    function setPrefermentPreset(key) {
+      const preset = prefermentPresets[key];
+      if (!preset || !preset.rows) return;
+      preset.rows.forEach((row, index) => {
+        const n = index + 1;
+        el[`pref${n}Type`].value = row[0];
+        el[`pref${n}FlourPct`].value = row[1];
+        el[`pref${n}Hydration`].value = row[2];
+      });
+    }
+
+    function applyDoughFeel() {
+      const base = products[el.product.value].hydration;
+      const offset = { safe: -3, soft: 0, open: 6 }[el.doughFeel.value] || 0;
+      el.hydration.value = base + offset;
     }
 
     function number(id) {
@@ -561,23 +644,17 @@
 
     function setDefaults() {
       const product = products[el.product.value];
-      el.flourWhite.value = el.product.value === "ryeMix" ? 30 : 70;
-      el.flourWhole.value = 0;
-      el.flourRyeLight.value = el.product.value === "ryeMix" ? 70 : 30;
-      el.flourRyeWhole.value = 0;
-      el.flourSpelt.value = 0;
-      el.hydration.value = product.hydration;
+      el.flourPreset.value = el.product.value === "ryeMix" ? "rye" : "everyday";
+      setFlourPreset(el.flourPreset.value);
+      el.doughFeel.value = "soft";
+      applyDoughFeel();
       el.enrichment.value = product.enrich;
+      el.enrichmentPreset.value = String(product.enrich > 20 ? 25 : product.enrich > 0 ? 8 : 0);
       el.doughTemp.value = product.doughTemp;
-      el.pref1Type.value = "sourdough100";
+      el.prefermentPreset.value = product.enrich > 20 ? "stiffSweet" : "oneSourdough";
+      setPrefermentPreset(el.prefermentPreset.value);
       el.pref1FlourPct.value = product.prefPct;
       el.pref1Hydration.value = product.prefHyd;
-      el.pref2Type.value = "none";
-      el.pref2FlourPct.value = 0;
-      el.pref2Hydration.value = 100;
-      el.pref3Type.value = "none";
-      el.pref3FlourPct.value = 0;
-      el.pref3Hydration.value = 50;
       calculate();
     }
 
@@ -654,18 +731,42 @@
     }
 
     optionList(el.product, products);
+    optionList(el.flourPreset, flourPresets);
+    optionList(el.prefermentPreset, prefermentPresets);
     prefermentRows.forEach(n => optionList(el[`pref${n}Type`], prefermentTypes));
     el.product.value = "country";
     setDefaults();
 
     ids.forEach(id => el[id].addEventListener("input", calculate));
     el.product.addEventListener("change", setDefaults);
+    el.flourPreset.addEventListener("change", () => {
+      setFlourPreset(el.flourPreset.value);
+      calculate();
+    });
+    flourMixIds.forEach(id => el[id].addEventListener("input", () => { el.flourPreset.value = "custom"; }));
+    el.doughFeel.addEventListener("change", () => {
+      applyDoughFeel();
+      calculate();
+    });
+    el.enrichmentPreset.addEventListener("change", () => {
+      if (el.enrichmentPreset.value === "custom") return;
+      el.enrichment.value = el.enrichmentPreset.value;
+      calculate();
+    });
+    el.enrichment.addEventListener("input", () => { el.enrichmentPreset.value = "custom"; });
+    el.prefermentPreset.addEventListener("change", () => {
+      setPrefermentPreset(el.prefermentPreset.value);
+      calculate();
+    });
     prefermentRows.forEach(n => {
       el[`pref${n}Type`].addEventListener("change", () => {
+        el.prefermentPreset.value = "custom";
         const type = prefermentTypes[el[`pref${n}Type`].value];
         if (type.hyd) el[`pref${n}Hydration`].value = type.hyd;
         calculate();
       });
+      el[`pref${n}FlourPct`].addEventListener("input", () => { el.prefermentPreset.value = "custom"; });
+      el[`pref${n}Hydration`].addEventListener("input", () => { el.prefermentPreset.value = "custom"; });
     });
     document.getElementById("reset").addEventListener("click", setDefaults);
     document.getElementById("print").addEventListener("click", () => window.print());
