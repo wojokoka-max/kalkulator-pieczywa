@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kalkulator pieczywa na zakwasie i zaczynach</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #faf7f1;
+      --ink: #211b15;
+      --muted: #6b6258;
+      --panel: #fffdf8;
+      --line: #ded3c3;
+      --accent: #8b4f2f;
+      --accent-2: #f0dfca;
+      --good: #236b45;
+      --warn: #9a5a00;
+      --shadow: 0 16px 40px rgba(69, 45, 22, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 2.6rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 780px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .inputs {
+      padding: 18px;
+      position: sticky;
+      top: 12px;
+    }
+
+    .results {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    fieldset {
+      border: 0;
+      padding: 0;
+      margin: 0 0 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    legend {
+      font-weight: 750;
+      margin-bottom: 10px;
+      font-size: 1.02rem;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: .92rem;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 10px 11px;
+      font: inherit;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid color-mix(in srgb, var(--accent), white 64%);
+      border-color: var(--accent);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 13px;
+      font: inherit;
+      font-weight: 720;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary {
+      color: var(--accent);
+      background: var(--accent-2);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.28rem;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .section {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .section:first-child { border-top: 0; padding-top: 0; }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.08rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      display: table;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f6ebdc;
+      font-size: .86rem;
+      color: #4f3a29;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #fff8ed;
+      padding: 12px;
+      border-radius: 6px;
+    }
+
+    .ok { color: var(--good); }
+    .warn { color: var(--warn); }
+
+    @media (max-width: 860px) {
+      main { width: min(100% - 20px, 720px); padding-top: 18px; }
+      .layout { grid-template-columns: 1fr; }
+      .inputs { position: static; }
+      .summary { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 540px) {
+      .grid-2, .summary { grid-template-columns: 1fr; }
+      th, td { padding: 9px 8px; }
+      .panel { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Kalkulator pieczywa: zakwas, biga, poolish</h1>
+      <p class="lead">Przelicznik mąki, wody, soli, zaczynu, temperatury wody, czasu fermentacji i temperatury pieczenia. Wyniki są punktem startowym, bo realny czas zależy od mąki, siły zakwasu i temperatury kuchni.</p>
+    </header>
+
+    <div class="layout">
+      <form class="panel inputs" id="calculator">
+        <fieldset>
+          <legend>Ciasto</legend>
+          <label>
+            Rodzaj wypieku
+            <select id="product"></select>
+          </label>
+          <div class="grid-2">
+            <label>
+              Cała mąka w cieście (g)
+              <input id="flour" type="number" min="100" max="5000" step="10" value="500">
+            </label>
+            <label>
+              Typ mąki
+              <select id="flourType"></select>
+            </label>
+          </div>
+          <div class="grid-2">
+            <label>
+              Hydracja docelowa (%)
+              <input id="hydration" type="number" min="45" max="115" step="1">
+            </label>
+            <label>
+              Tłuszcz/cukier wzbogacenie (%)
+              <input id="enrichment" type="number" min="0" max="45" step="1">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Zakwas albo zaczyn</legend>
+          <div class="grid-2">
+            <label>
+              Metoda
+              <select id="preferment"></select>
+            </label>
+            <label>
+              Mąka w zaczynie (% całości)
+              <input id="prefermentFlourPct" type="number" min="0" max="60" step="1">
+            </label>
+          </div>
+          <div class="grid-2">
+            <label>
+              Hydracja zaczynu (%)
+              <input id="prefermentHydration" type="number" min="45" max="125" step="1">
+            </label>
+            <label>
+              Dojrzałość zaczynu
+              <select id="starterStrength">
+                <option value="fast">mocny / aktywny</option>
+                <option value="normal" selected>normalny</option>
+                <option value="slow">słaby / zimny</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Temperatura</legend>
+          <div class="grid-2">
+            <label>
+              Temperatura kuchni (°C)
+              <input id="roomTemp" type="number" min="12" max="34" step="0.5" value="22">
+            </label>
+            <label>
+              Temperatura mąki (°C)
+              <input id="flourTemp" type="number" min="10" max="34" step="0.5" value="21">
+            </label>
+          </div>
+          <div class="grid-2">
+            <label>
+              Temperatura zaczynu (°C)
+              <input id="starterTemp" type="number" min="8" max="34" step="0.5" value="22">
+            </label>
+            <label>
+              Tarcie przy wyrabianiu (°C)
+              <input id="friction" type="number" min="0" max="12" step="0.5" value="4">
+            </label>
+          </div>
+          <label>
+            Docelowa temperatura ciasta (°C)
+            <input id="doughTemp" type="number" min="18" max="30" step="0.5">
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <button type="button" id="reset">Ustaw bazę</button>
+          <button type="button" class="secondary" id="print">Drukuj</button>
+        </div>
+      </form>
+
+      <section class="panel results" aria-live="polite">
+        <div class="summary">
+          <div class="metric"><span>Woda razem</span><strong id="waterTotal">-</strong></div>
+          <div class="metric"><span>Temperatura wody</span><strong id="waterTemp">-</strong></div>
+          <div class="metric"><span>Sól</span><strong id="salt">-</strong></div>
+          <div class="metric"><span>Orientacyjny czas</span><strong id="timeTotal">-</strong></div>
+        </div>
+
+        <div class="section">
+          <h2>Składniki</h2>
+          <table>
+            <thead>
+              <tr><th>Element</th><th>Ilość</th><th>Uwaga</th></tr>
+            </thead>
+            <tbody id="ingredients"></tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>Proces</h2>
+          <table>
+            <thead>
+              <tr><th>Etap</th><th>Czas / temperatura</th><th>Co obserwować</th></tr>
+            </thead>
+            <tbody id="process"></tbody>
+          </table>
+        </div>
+
+        <div class="section callout">
+          <h2>Ocena ciasta</h2>
+          <p class="note" id="diagnosis"></p>
+        </div>
+
+        <div class="section">
+          <h2>Założenia</h2>
+          <p class="note">Zakwas liczony jest jako mąka + woda obecne w cieście, nie jako dodatkowa mąka ponad wybraną sumę. Biga i poolish są liczone tak samo. Dla drożdży kalkulator podaje orientacyjny zakres, bo realna dawka zależy od czasu i temperatury dojrzewania zaczynu.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const products = {
+      country: { label: "Chleb pszenny / pszenno-żytni", hydration: 72, enrich: 0, doughTemp: 25, salt: 2, prefPct: 25, prefHyd: 100, bake: "20 min 250°C pod przykryciem, potem 20-30 min 220°C bez przykrycia", bulk: [3.5, 5.5], proof: [1.5, 3], note: "Dobre napowietrzenie, ciasto elastyczne, wzrost zwykle 50-80%." },
+      ryeMix: { label: "Chleb z dużym udziałem żyta", hydration: 82, enrich: 0, doughTemp: 27, salt: 2, prefPct: 35, prefHyd: 100, bake: "10 min 240°C, potem 35-50 min 200-210°C", bulk: [2, 4], proof: [1, 2.5], note: "Ciasto bardziej pastowate. Nie oczekuj mocnej siatki glutenowej." },
+      rolls: { label: "Bułki na zakwasie", hydration: 66, enrich: 3, doughTemp: 25, salt: 2, prefPct: 20, prefHyd: 100, bake: "15-22 min 220-235°C", bulk: [3, 5], proof: [1.5, 3], note: "Ciasto powinno trzymać kształt, ale nie być twarde." },
+      challah: { label: "Chałka na zakwasie", hydration: 55, enrich: 28, doughTemp: 24, salt: 1.8, prefPct: 18, prefHyd: 60, bake: "25-35 min 175-185°C", bulk: [5, 8], proof: [2, 4], note: "Cukier, jajka i tłuszcz spowalniają fermentację. Pilnuj objętości, nie zegarka." },
+      sweetRolls: { label: "Cynamonki / słodkie bułki", hydration: 62, enrich: 30, doughTemp: 24, salt: 1.8, prefPct: 18, prefHyd: 80, bake: "18-28 min 175-190°C", bulk: [5, 8], proof: [2, 4], note: "Ciasto ma być miękkie i sprężyste. Zbyt duża mąka przy podsypywaniu odbiera puszystość." },
+      croissant: { label: "Croissant / ciasto laminowane", hydration: 55, enrich: 12, doughTemp: 22, salt: 2, prefPct: 15, prefHyd: 50, bake: "16-22 min 190-205°C", bulk: [2, 4], proof: [2, 3.5], note: "Niższa temperatura ciasta ułatwia laminowanie. Masło i ciasto muszą mieć podobną plastyczność." },
+      horns: { label: "Rogale półsłodkie", hydration: 58, enrich: 22, doughTemp: 24, salt: 1.8, prefPct: 18, prefHyd: 70, bake: "18-26 min 180-195°C", bulk: [4.5, 7], proof: [1.5, 3.5], note: "Przy nadzieniu lepiej nie przefermentować, bo rogale gorzej utrzymają kształt." },
+      pizza: { label: "Focaccia / pizza na zakwasie", hydration: 75, enrich: 3, doughTemp: 25, salt: 2.3, prefPct: 15, prefHyd: 100, bake: "focaccia 20-30 min 220-240°C; pizza jak najwyżej, krótko", bulk: [3, 6], proof: [1, 3], note: "Wyższa hydracja daje lekkość, ale wymaga składania i delikatnego obchodzenia się z ciastem." }
+    };
+
+    const flourTypes = {
+      whiteBread: { label: "pszenna chlebowa jasna", waterAdj: 0, timeAdj: 1, note: "najbardziej przewidywalna baza" },
+      wholeWheat: { label: "pszenna chlebowa razowa", waterAdj: 8, timeAdj: 0.9, note: "pije więcej wody, fermentuje zwykle szybciej" },
+      spelt: { label: "orkiszowa", waterAdj: 3, timeAdj: 0.9, note: "delikatniejszy gluten, ostrożnie z wyrabianiem" },
+      ryeLight: { label: "żytnia jasna", waterAdj: 8, timeAdj: 0.85, note: "mniej elastyczna struktura, więcej lepkości" },
+      ryeWhole: { label: "żytnia razowa", waterAdj: 14, timeAdj: 0.8, note: "bardzo chłonna, ciasto bardziej pastowate" }
+    };
+
+    const preferments = {
+      sourdough100: { label: "zakwas 100%", hyd: 100, yeast: false, note: "klasyczny zakwas pszenny lub żytni" },
+      stiffSourdough: { label: "sztywny zakwas / lievito madre", hyd: 50, yeast: false, note: "łagodniejszy profil, dobry do słodkich ciast" },
+      biga: { label: "biga drożdżowa", hyd: 50, yeast: true, note: "zwykle 12-18 h dojrzewania, sztywna struktura" },
+      poolish: { label: "poolish drożdżowy", hyd: 100, yeast: true, note: "zwykle 8-16 h dojrzewania, płynny zaczyn" },
+      none: { label: "bez zaczynu", hyd: 0, yeast: false, note: "liczy tylko ciasto właściwe" }
+    };
+
+    const ids = ["product", "flourType", "flour", "hydration", "enrichment", "preferment", "prefermentFlourPct", "prefermentHydration", "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
+    const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+
+    function optionList(select, data) {
+      select.innerHTML = Object.entries(data).map(([value, item]) => `<option value="${value}">${item.label}</option>`).join("");
+    }
+
+    function number(id) {
+      return Number(el[id].value) || 0;
+    }
+
+    function grams(value) {
+      return `${Math.round(value)} g`;
+    }
+
+    function hours(range) {
+      return `${roundHalf(range[0])}-${roundHalf(range[1])} h`;
+    }
+
+    function roundHalf(value) {
+      return Math.round(value * 2) / 2;
+    }
+
+    function yeastDose(method, prefermentFlour, roomTemp) {
+      if (!preferments[method].yeast || prefermentFlour <= 0) return "-";
+      const warmFactor = roomTemp >= 24 ? 0.7 : roomTemp <= 19 ? 1.4 : 1;
+      const min = prefermentFlour * 0.001 * warmFactor;
+      const max = prefermentFlour * 0.003 * warmFactor;
+      return `${min.toFixed(1)}-${max.toFixed(1)} g świeżych drożdży albo ${(min / 3).toFixed(2)}-${(max / 3).toFixed(2)} g suchych`;
+    }
+
+    function setDefaults() {
+      const product = products[el.product.value];
+      const method = preferments[el.preferment.value];
+      el.hydration.value = product.hydration;
+      el.enrichment.value = product.enrich;
+      el.doughTemp.value = product.doughTemp;
+      el.prefermentFlourPct.value = product.prefPct;
+      el.prefermentHydration.value = method.hyd || product.prefHyd;
+      calculate();
+    }
+
+    function calculate() {
+      const product = products[el.product.value];
+      const flourType = flourTypes[el.flourType.value];
+      const method = preferments[el.preferment.value];
+      const flour = number("flour");
+      const adjustedHydration = number("hydration") + flourType.waterAdj;
+      const enrichment = number("enrichment");
+      const prefermentPct = method === preferments.none ? 0 : number("prefermentFlourPct");
+      const prefermentHyd = method === preferments.none ? 0 : number("prefermentHydration");
+      const prefermentFlour = flour * prefermentPct / 100;
+      const prefermentWater = prefermentFlour * prefermentHyd / 100;
+      const totalWater = flour * adjustedHydration / 100;
+      const finalWater = Math.max(totalWater - prefermentWater, 0);
+      const finalFlour = Math.max(flour - prefermentFlour, 0);
+      const salt = flour * product.salt / 100;
+      const enrichGrams = flour * enrichment / 100;
+      const desired = number("doughTemp");
+      const tempFactorCount = el.preferment.value === "none" ? 2 : 3;
+      const waterTemp = desired * tempFactorCount - number("flourTemp") - (el.preferment.value === "none" ? 0 : number("starterTemp")) - number("friction");
+      const strengthFactor = { fast: 0.8, normal: 1, slow: 1.3 }[el.starterStrength.value];
+      const room = number("roomTemp");
+      const tempFactor = Math.pow(1.18, 22 - room);
+      const enrichFactor = 1 + Math.min(enrichment, 35) / 70;
+      const baseFactor = flourType.timeAdj * strengthFactor * tempFactor * enrichFactor;
+      const bulk = product.bulk.map(v => Math.max(0.5, v * baseFactor));
+      const proof = product.proof.map(v => Math.max(0.5, v * baseFactor));
+      const total = [bulk[0] + proof[0], bulk[1] + proof[1]];
+      const waterClass = waterTemp < 5 ? "warn" : waterTemp > 45 ? "warn" : "ok";
+      const waterText = waterTemp < 0 ? `${Math.round(waterTemp)}°C, za zimno w praktyce` : `${Math.round(waterTemp)}°C`;
+
+      document.getElementById("waterTotal").textContent = grams(totalWater);
+      document.getElementById("waterTemp").textContent = waterText;
+      document.getElementById("waterTemp").className = waterClass;
+      document.getElementById("salt").textContent = grams(salt);
+      document.getElementById("timeTotal").textContent = hours(total);
+
+      document.getElementById("ingredients").innerHTML = [
+        ["Mąka razem", grams(flour), flourType.note],
+        ["Mąka w zaczynie", grams(prefermentFlour), method.note],
+        ["Woda w zaczynie", grams(prefermentWater), `${prefermentHyd}% hydracji zaczynu`],
+        ["Mąka do ciasta właściwego", grams(finalFlour), "dodawana po dojrzeniu zaczynu"],
+        ["Woda do ciasta właściwego", grams(finalWater), `${Math.round(adjustedHydration)}% hydracji po korekcie mąki`],
+        ["Sól", grams(salt), `${product.salt}% względem mąki`],
+        ["Tłuszcz/cukier/jajka razem", grams(enrichGrams), "pole do szacowania ciast wzbogaconych"],
+        ["Drożdże do bigi/poolish", yeastDose(el.preferment.value, prefermentFlour, room), "orientacyjnie dla zaczynu 8-18 h"]
+      ].map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join("");
+
+      document.getElementById("process").innerHTML = [
+        ["Dojrzewanie zaczynu", method.yeast ? "8-18 h w 18-22°C" : "4-12 h, zależnie od karmienia i temperatury", "aktywny, wyrośnięty, bez ostrego zapachu rozkładu"],
+        ["Autoliza / odpoczynek", enrichment > 15 ? "10-20 min" : "20-45 min", "mąka nawodniona, ciasto mniej szorstkie"],
+        ["Fermentacja wstępna", `${hours(bulk)} przy ok. ${room}°C`, product.note],
+        ["Garowanie", `${hours(proof)} przy ok. ${room}°C`, "ciasto sprężyste, powoli wraca po naciśnięciu"],
+        ["Pieczenie", product.bake, "dopiekaj do mocnego zapachu skórki i stabilnego spodu"]
+      ].map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join("");
+
+      const warnings = [];
+      if (adjustedHydration >= 85 && !el.flourType.value.includes("rye")) warnings.push("To będzie luźne ciasto. Przyda się składanie i delikatne obchodzenie.");
+      if (enrichment > 20) warnings.push("Ciasto wzbogacone będzie rosło wolniej. Zakwas powinien być łagodny i naprawdę aktywny.");
+      if (waterTemp < 5) warnings.push("Wyliczona woda jest bardzo zimna. W praktyce schłódź mąkę albo obniż tarcie wyrabiania.");
+      if (waterTemp > 45) warnings.push("Wyliczona woda jest bardzo ciepła. Może osłabić zakwas lub drożdże, więc ogrzej mąkę/kuchnię zamiast lać wrzątek.");
+      if (el.flourType.value.includes("whole") || el.flourType.value.includes("rye")) warnings.push("Mąka pełnoziarnista lub żytnia chłonie wodę z opóźnieniem. Zostaw część wody do dolania po odpoczynku.");
+      document.getElementById("diagnosis").innerHTML = warnings.length ? warnings.join(" ") : "Parametry wyglądają spokojnie. Pilnuj objętości i sprężystości ciasta bardziej niż minutnika.";
+    }
+
+    optionList(el.product, products);
+    optionList(el.flourType, flourTypes);
+    optionList(el.preferment, preferments);
+    el.product.value = "country";
+    el.flourType.value = "whiteBread";
+    el.preferment.value = "sourdough100";
+    setDefaults();
+
+    ids.forEach(id => el[id].addEventListener("input", calculate));
+    el.product.addEventListener("change", setDefaults);
+    el.preferment.addEventListener("change", setDefaults);
+    document.getElementById("reset").addEventListener("click", setDefaults);
+    document.getElementById("print").addEventListener("click", () => window.print());
+  </script>
+</body>
+</html>
