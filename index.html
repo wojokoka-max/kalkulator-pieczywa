@@ -130,6 +130,22 @@
       margin-top: 10px;
     }
 
+    .flour-mix {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf2;
+    }
+
+    .mini-title {
+      margin: 0;
+      font-size: .88rem;
+      font-weight: 750;
+      color: #4f3a29;
+    }
+
     button {
       border: 0;
       border-radius: 6px;
@@ -262,8 +278,35 @@
               <input id="flour" type="number" min="100" max="5000" step="10" value="500">
             </label>
             <label>
-              Typ mąki
-              <select id="flourType"></select>
+              Suma mieszanki
+              <input id="mixTotal" type="text" value="100%" readonly>
+            </label>
+          </div>
+          <div class="flour-mix">
+            <p class="mini-title">Mieszanka mąk (% całej mąki)</p>
+            <div class="grid-2">
+              <label>
+                Pszenna chlebowa jasna
+                <input id="flourWhite" type="number" min="0" max="100" step="1" value="70">
+              </label>
+              <label>
+                Pszenna chlebowa razowa
+                <input id="flourWhole" type="number" min="0" max="100" step="1" value="0">
+              </label>
+            </div>
+            <div class="grid-2">
+              <label>
+                Żytnia jasna
+                <input id="flourRyeLight" type="number" min="0" max="100" step="1" value="30">
+              </label>
+              <label>
+                Żytnia razowa
+                <input id="flourRyeWhole" type="number" min="0" max="100" step="1" value="0">
+              </label>
+            </div>
+            <label>
+              Orkiszowa
+              <input id="flourSpelt" type="number" min="0" max="100" step="1" value="0">
             </label>
           </div>
           <div class="grid-2">
@@ -394,11 +437,11 @@
     };
 
     const flourTypes = {
-      whiteBread: { label: "pszenna chlebowa jasna", waterAdj: 0, timeAdj: 1, note: "najbardziej przewidywalna baza" },
-      wholeWheat: { label: "pszenna chlebowa razowa", waterAdj: 8, timeAdj: 0.9, note: "pije więcej wody, fermentuje zwykle szybciej" },
-      spelt: { label: "orkiszowa", waterAdj: 3, timeAdj: 0.9, note: "delikatniejszy gluten, ostrożnie z wyrabianiem" },
-      ryeLight: { label: "żytnia jasna", waterAdj: 8, timeAdj: 0.85, note: "mniej elastyczna struktura, więcej lepkości" },
-      ryeWhole: { label: "żytnia razowa", waterAdj: 14, timeAdj: 0.8, note: "bardzo chłonna, ciasto bardziej pastowate" }
+      flourWhite: { label: "pszenna chlebowa jasna", waterAdj: 0, timeAdj: 1, note: "najbardziej przewidywalna baza" },
+      flourWhole: { label: "pszenna chlebowa razowa", waterAdj: 8, timeAdj: 0.9, note: "pije więcej wody, fermentuje zwykle szybciej" },
+      flourSpelt: { label: "orkiszowa", waterAdj: 3, timeAdj: 0.9, note: "delikatniejszy gluten, ostrożnie z wyrabianiem" },
+      flourRyeLight: { label: "żytnia jasna", waterAdj: 8, timeAdj: 0.85, note: "mniej elastyczna struktura, więcej lepkości" },
+      flourRyeWhole: { label: "żytnia razowa", waterAdj: 14, timeAdj: 0.8, note: "bardzo chłonna, ciasto bardziej pastowate" }
     };
 
     const preferments = {
@@ -409,7 +452,8 @@
       none: { label: "bez zaczynu", hyd: 0, yeast: false, note: "liczy tylko ciasto właściwe" }
     };
 
-    const ids = ["product", "flourType", "flour", "hydration", "enrichment", "preferment", "prefermentFlourPct", "prefermentHydration", "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
+    const flourMixIds = Object.keys(flourTypes);
+    const ids = ["product", "flour", "mixTotal", ...flourMixIds, "hydration", "enrichment", "preferment", "prefermentFlourPct", "prefermentHydration", "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
     const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
 
     function optionList(select, data) {
@@ -440,9 +484,29 @@
       return `${min.toFixed(1)}-${max.toFixed(1)} g świeżych drożdży albo ${(min / 3).toFixed(2)}-${(max / 3).toFixed(2)} g suchych`;
     }
 
+    function flourMix() {
+      const raw = flourMixIds.map(id => ({ id, pct: Math.max(0, number(id)), ...flourTypes[id] }));
+      const totalPct = raw.reduce((sum, item) => sum + item.pct, 0);
+      const effectiveTotal = totalPct > 0 ? totalPct : 100;
+      const items = raw.map(item => ({ ...item, share: item.pct / effectiveTotal }));
+      const waterAdj = items.reduce((sum, item) => sum + item.waterAdj * item.share, 0);
+      const timeAdj = items.reduce((sum, item) => sum + item.timeAdj * item.share, 0);
+      const ryeShare = items.filter(item => item.id.includes("Rye")).reduce((sum, item) => sum + item.share, 0);
+      const wholeShare = items.filter(item => item.id.includes("Whole")).reduce((sum, item) => sum + item.share, 0);
+      const active = items.filter(item => item.pct > 0);
+      el.mixTotal.value = `${Math.round(totalPct)}%`;
+      el.mixTotal.className = Math.abs(totalPct - 100) <= 1 ? "ok" : "warn";
+      return { totalPct, waterAdj, timeAdj, ryeShare, wholeShare, active };
+    }
+
     function setDefaults() {
       const product = products[el.product.value];
       const method = preferments[el.preferment.value];
+      el.flourWhite.value = el.product.value === "ryeMix" ? 30 : 70;
+      el.flourWhole.value = 0;
+      el.flourRyeLight.value = el.product.value === "ryeMix" ? 70 : 30;
+      el.flourRyeWhole.value = 0;
+      el.flourSpelt.value = 0;
       el.hydration.value = product.hydration;
       el.enrichment.value = product.enrich;
       el.doughTemp.value = product.doughTemp;
@@ -453,10 +517,10 @@
 
     function calculate() {
       const product = products[el.product.value];
-      const flourType = flourTypes[el.flourType.value];
+      const mix = flourMix();
       const method = preferments[el.preferment.value];
       const flour = number("flour");
-      const adjustedHydration = number("hydration") + flourType.waterAdj;
+      const adjustedHydration = number("hydration") + mix.waterAdj;
       const enrichment = number("enrichment");
       const prefermentPct = method === preferments.none ? 0 : number("prefermentFlourPct");
       const prefermentHyd = method === preferments.none ? 0 : number("prefermentHydration");
@@ -474,7 +538,7 @@
       const room = number("roomTemp");
       const tempFactor = Math.pow(1.18, 22 - room);
       const enrichFactor = 1 + Math.min(enrichment, 35) / 70;
-      const baseFactor = flourType.timeAdj * strengthFactor * tempFactor * enrichFactor;
+      const baseFactor = mix.timeAdj * strengthFactor * tempFactor * enrichFactor;
       const bulk = product.bulk.map(v => Math.max(0.5, v * baseFactor));
       const proof = product.proof.map(v => Math.max(0.5, v * baseFactor));
       const total = [bulk[0] + proof[0], bulk[1] + proof[1]];
@@ -488,7 +552,7 @@
       document.getElementById("timeTotal").textContent = hours(total);
 
       document.getElementById("ingredients").innerHTML = [
-        ["Mąka razem", grams(flour), flourType.note],
+        ["Mąka razem", grams(flour), mix.active.map(item => `${item.label}: ${Math.round(item.share * 100)}%`).join(", ") || "wpisz udział mąk"],
         ["Mąka w zaczynie", grams(prefermentFlour), method.note],
         ["Woda w zaczynie", grams(prefermentWater), `${prefermentHyd}% hydracji zaczynu`],
         ["Mąka do ciasta właściwego", grams(finalFlour), "dodawana po dojrzeniu zaczynu"],
@@ -507,19 +571,18 @@
       ].map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join("");
 
       const warnings = [];
-      if (adjustedHydration >= 85 && !el.flourType.value.includes("rye")) warnings.push("To będzie luźne ciasto. Przyda się składanie i delikatne obchodzenie.");
+      if (Math.abs(mix.totalPct - 100) > 1) warnings.push("Suma mąk nie wynosi 100%, więc udziały zostały przeliczone proporcjonalnie.");
+      if (adjustedHydration >= 85 && mix.ryeShare < 0.3) warnings.push("To będzie luźne ciasto. Przyda się składanie i delikatne obchodzenie.");
       if (enrichment > 20) warnings.push("Ciasto wzbogacone będzie rosło wolniej. Zakwas powinien być łagodny i naprawdę aktywny.");
       if (waterTemp < 5) warnings.push("Wyliczona woda jest bardzo zimna. W praktyce schłódź mąkę albo obniż tarcie wyrabiania.");
       if (waterTemp > 45) warnings.push("Wyliczona woda jest bardzo ciepła. Może osłabić zakwas lub drożdże, więc ogrzej mąkę/kuchnię zamiast lać wrzątek.");
-      if (el.flourType.value.includes("whole") || el.flourType.value.includes("rye")) warnings.push("Mąka pełnoziarnista lub żytnia chłonie wodę z opóźnieniem. Zostaw część wody do dolania po odpoczynku.");
+      if (mix.wholeShare > 0 || mix.ryeShare > 0) warnings.push("Mąka pełnoziarnista lub żytnia chłonie wodę z opóźnieniem. Zostaw część wody do dolania po odpoczynku.");
       document.getElementById("diagnosis").innerHTML = warnings.length ? warnings.join(" ") : "Parametry wyglądają spokojnie. Pilnuj objętości i sprężystości ciasta bardziej niż minutnika.";
     }
 
     optionList(el.product, products);
-    optionList(el.flourType, flourTypes);
     optionList(el.preferment, preferments);
     el.product.value = "country";
-    el.flourType.value = "whiteBread";
     el.preferment.value = "sourdough100";
     setDefaults();
 
