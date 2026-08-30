@@ -1,3 +1,4 @@
+JS syntax OK
 <!doctype html>
 <html lang="pl">
 <head>
@@ -352,21 +353,7 @@
             <strong>Hydratację dobierze kalkulator.</strong>
             Uwzględni rodzaj wypieku oraz chłonność wybranej mieszanki mąk.
           </div>
-          <div class="grid-2">
-            <label>
-              Wzbogacenie
-              <select id="enrichmentPreset">
-                <option value="0">brak</option>
-                <option value="8">lekko: odrobina tłuszczu/cukru</option>
-                <option value="25">słodkie / maślane</option>
-                <option value="custom">własne</option>
-              </select>
-            </label>
-            <label>
-              Tłuszcz/cukier/jajka, jeśli chcesz poprawić (%)
-              <input id="enrichment" type="number" min="0" max="45" step="1">
-            </label>
-          </div>
+          <p class="calculated-note small"><strong>Składniki dodatkowe dobierze kalkulator</strong> odpowiednio do wybranego wypieku.</p>
         </fieldset>
 
         <fieldset>
@@ -399,14 +386,7 @@
               </div>
             </div>
           </details>
-          <label>
-            Siła fermentacji
-            <select id="starterStrength">
-              <option value="fast">mocna / aktywna</option>
-              <option value="normal" selected>normalna</option>
-              <option value="slow">słaba / zimna</option>
-            </select>
-          </label>
+          <p class="calculated-note small"><strong>Czas fermentacji i temperatury dobierze kalkulator</strong> do rodzaju wypieku, zaczynu i warunków w kuchni.</p>
         </fieldset>
 
         <fieldset>
@@ -537,7 +517,7 @@
     const flourMixIds = Object.keys(flourTypes);
     const prefermentRows = [1, 2, 3];
     const prefermentIds = prefermentRows.flatMap(n => [`pref${n}Type`, `pref${n}FlourPct`, `pref${n}Hydration`]);
-    const ids = ["product", "flour", "flourPreset", "mixTotal", ...flourMixIds, "enrichmentPreset", "enrichment", "prefermentPreset", ...prefermentIds, "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
+    const ids = ["product", "flour", "flourPreset", "mixTotal", ...flourMixIds, "prefermentPreset", ...prefermentIds, "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
     const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
 
     function optionList(select, data) {
@@ -630,8 +610,6 @@
       const product = products[el.product.value];
       el.flourPreset.value = el.product.value === "ryeMix" ? "rye" : "everyday";
       setFlourPreset(el.flourPreset.value);
-      el.enrichment.value = product.enrich;
-      el.enrichmentPreset.value = String(product.enrich > 20 ? 25 : product.enrich > 0 ? 8 : 0);
       el.doughTemp.value = product.doughTemp;
       el.prefermentPreset.value = product.enrich > 20 ? "stiffSweet" : "oneSourdough";
       setPrefermentPreset(el.prefermentPreset.value);
@@ -647,7 +625,7 @@
       const preferment = prefermentMix(flour);
       // Hydratacja jest dobierana z rodzaju wypieku i chłonności mieszanki.
       const adjustedHydration = product.hydration + mix.waterAdj;
-      const enrichment = number("enrichment");
+      const enrichment = product.enrich;
       const totalWater = flour * adjustedHydration / 100;
       const finalWater = Math.max(totalWater - preferment.waterTotal, 0);
       const finalFlour = Math.max(flour - preferment.flourTotal, 0);
@@ -657,7 +635,7 @@
       const hasPreferment = preferment.flourTotal > 0;
       const tempFactorCount = hasPreferment ? 3 : 2;
       const waterTemp = desired * tempFactorCount - number("flourTemp") - (hasPreferment ? number("starterTemp") : 0) - number("friction");
-      const strengthFactor = { fast: 0.8, normal: 1, slow: 1.3 }[el.starterStrength.value];
+      const strengthFactor = 1;
       const room = number("roomTemp");
       const tempFactor = Math.pow(1.18, 22 - room);
       const enrichFactor = 1 + Math.min(enrichment, 35) / 70;
@@ -727,12 +705,6 @@
       calculate();
     });
     flourMixIds.forEach(id => el[id].addEventListener("input", () => { el.flourPreset.value = "custom"; }));
-    el.enrichmentPreset.addEventListener("change", () => {
-      if (el.enrichmentPreset.value === "custom") return;
-      el.enrichment.value = el.enrichmentPreset.value;
-      calculate();
-    });
-    el.enrichment.addEventListener("input", () => { el.enrichmentPreset.value = "custom"; });
     el.prefermentPreset.addEventListener("change", () => {
       setPrefermentPreset(el.prefermentPreset.value);
       calculate();
