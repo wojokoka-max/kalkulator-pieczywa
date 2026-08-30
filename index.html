@@ -422,17 +422,17 @@
         </div>
 
         <div class="section">
-          <h2>Składniki</h2>
+          <h2>Fazy i składniki</h2>
           <table>
             <thead>
-              <tr><th>Element</th><th>Ilość</th><th>Uwaga</th></tr>
+              <tr><th>Faza</th><th>Składnik</th><th>Ilość</th></tr>
             </thead>
             <tbody id="ingredients"></tbody>
           </table>
         </div>
 
         <div class="section">
-          <h2>Proces</h2>
+          <h2>Harmonogram</h2>
           <table>
             <thead>
               <tr><th>Etap</th><th>Czas / temperatura</th><th>Co obserwować</th></tr>
@@ -516,6 +516,14 @@
       const min = prefermentFlour * 0.001 * warmFactor;
       const max = prefermentFlour * 0.003 * warmFactor;
       return `${min.toFixed(1)}-${max.toFixed(1)} g świeżych drożdży albo ${(min / 3).toFixed(2)}-${(max / 3).toFixed(2)} g suchych`;
+    }
+
+    function yeastDoseShort(prefermentFlour, roomTemp) {
+      if (prefermentFlour <= 0) return "-";
+      const warmFactor = roomTemp >= 24 ? 0.7 : roomTemp <= 19 ? 1.4 : 1;
+      const min = prefermentFlour * 0.001 * warmFactor;
+      const max = prefermentFlour * 0.003 * warmFactor;
+      return `${min.toFixed(1)}-${max.toFixed(1)} g świeżych / ${(min / 3).toFixed(2)}-${(max / 3).toFixed(2)} g suchych`;
     }
 
     function prefermentMix(flour) {
@@ -606,23 +614,32 @@
       document.getElementById("salt").textContent = grams(salt);
       document.getElementById("timeTotal").textContent = hours(total);
 
-      document.getElementById("ingredients").innerHTML = [
-        ["Mąka razem", grams(flour), mix.active.map(item => `${item.label}: ${Math.round(item.share * 100)}%`).join(", ") || "wpisz udział mąk"],
-        ["Mąka w zaczynach", grams(preferment.flourTotal), preferment.active.map(row => `${row.label}: ${row.pct}%`).join(", ") || "bez zaczynu"],
-        ["Woda w zaczynach", grams(preferment.waterTotal), preferment.flourTotal > 0 ? `średnia hydracja ${Math.round(preferment.averageHydration)}%` : "bez zaczynu"],
-        ["Mąka do ciasta właściwego", grams(finalFlour), "dodawana po dojrzeniu zaczynu"],
-        ["Woda do ciasta właściwego", grams(finalWater), `${Math.round(adjustedHydration)}% hydracji po korekcie mąki`],
-        ["Sól", grams(salt), `${product.salt}% względem mąki`],
-        ["Tłuszcz/cukier/jajka razem", grams(enrichGrams), "pole do szacowania ciast wzbogaconych"],
-        ["Drożdże do bigi/poolish", preferment.yeastFlour > 0 ? yeastDose("biga", preferment.yeastFlour, room) : "-", "orientacyjnie dla zaczynu 8-18 h"]
-      ].map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join("");
+      const flourDescription = mix.active.map(item => `${item.label}: ${grams(flour * item.share)}`).join(", ") || "wpisz udział mąk";
+      const phaseRows = [];
+      preferment.active.forEach((row, index) => {
+        const phase = `${index + 1}. ${row.label}`;
+        phaseRows.push([phase, "mąka", grams(row.flour)]);
+        phaseRows.push([phase, "woda", grams(row.water)]);
+        if (row.yeast) phaseRows.push([phase, "drożdże", yeastDoseShort(row.flour, room)]);
+      });
+      if (!preferment.active.length) {
+        phaseRows.push(["1. Zaczyn", "brak", "0 g"]);
+      }
+      phaseRows.push(["2. Ciasto właściwe", "mąka", grams(finalFlour)]);
+      phaseRows.push(["2. Ciasto właściwe", "woda", grams(finalWater)]);
+      phaseRows.push(["2. Ciasto właściwe", "sól", grams(salt)]);
+      phaseRows.push(["2. Ciasto właściwe", "tłuszcz/cukier/jajka razem", grams(enrichGrams)]);
+      phaseRows.push(["3. Suma kontrolna", "mąka razem", `${grams(flour)} (${flourDescription})`]);
+      phaseRows.push(["3. Suma kontrolna", "woda razem", `${grams(totalWater)}; hydracja ${Math.round(adjustedHydration)}%`]);
+      phaseRows.push(["3. Suma kontrolna", "zaczyny razem", `${grams(preferment.flourTotal + preferment.waterTotal)}; średnia hydracja ${Math.round(preferment.averageHydration || 0)}%`]);
+      document.getElementById("ingredients").innerHTML = phaseRows.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join("");
 
       document.getElementById("process").innerHTML = [
-        ["Dojrzewanie zaczynów", preferment.yeastFlour > 0 ? "8-18 h w 18-22°C dla bigi/poolish; zakwas według aktywności" : "4-12 h, zależnie od karmienia i temperatury", "aktywne, wyrośnięte, bez ostrego zapachu rozkładu"],
-        ["Autoliza / odpoczynek", enrichment > 15 ? "10-20 min" : "20-45 min", "mąka nawodniona, ciasto mniej szorstkie"],
-        ["Fermentacja wstępna", `${hours(bulk)} przy ok. ${room}°C`, product.note],
-        ["Garowanie", `${hours(proof)} przy ok. ${room}°C`, "ciasto sprężyste, powoli wraca po naciśnięciu"],
-        ["Pieczenie", product.bake, "dopiekaj do mocnego zapachu skórki i stabilnego spodu"]
+        ["Faza 1: dojrzewanie zaczynów", preferment.yeastFlour > 0 ? "8-18 h w 18-22°C dla bigi/poolish; zakwas według aktywności" : "4-12 h, zależnie od karmienia i temperatury", "aktywne, wyrośnięte, bez ostrego zapachu rozkładu"],
+        ["Faza 2: mieszanie / autoliza", enrichment > 15 ? "10-20 min" : "20-45 min", "mąka nawodniona, ciasto mniej szorstkie"],
+        ["Faza 3: fermentacja wstępna", `${hours(bulk)} przy ok. ${room}°C`, product.note],
+        ["Faza 4: formowanie i garowanie", `${hours(proof)} przy ok. ${room}°C`, "ciasto sprężyste, powoli wraca po naciśnięciu"],
+        ["Faza 5: pieczenie", product.bake, "dopiekaj do mocnego zapachu skórki i stabilnego spodu"]
       ].map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join("");
 
       const warnings = [];
