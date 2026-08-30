@@ -139,6 +139,29 @@
       background: #fffaf2;
     }
 
+    .preferment-mix {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf2;
+    }
+
+    .preferment-row,
+    .preferment-head {
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) minmax(72px, .45fr) minmax(82px, .55fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .preferment-head {
+      color: var(--muted);
+      font-size: .78rem;
+      padding: 0 2px;
+    }
+
     .mini-title {
       margin: 0;
       font-size: .88rem;
@@ -252,6 +275,8 @@
 
     @media (max-width: 540px) {
       .grid-2, .summary { grid-template-columns: 1fr; }
+      .preferment-row,
+      .preferment-head { grid-template-columns: 1fr; }
       th, td { padding: 9px 8px; }
       .panel { box-shadow: none; }
     }
@@ -322,31 +347,36 @@
         </fieldset>
 
         <fieldset>
-          <legend>Zakwas albo zaczyn</legend>
-          <div class="grid-2">
-            <label>
-              Metoda
-              <select id="preferment"></select>
-            </label>
-            <label>
-              Mąka w zaczynie (% całości)
-              <input id="prefermentFlourPct" type="number" min="0" max="60" step="1">
-            </label>
+          <legend>Zakwasy, levain i zaczyny</legend>
+          <div class="preferment-mix">
+            <p class="mini-title">Mieszanka zaczynów. Procent oznacza mąkę z całej mąki w cieście.</p>
+            <div class="preferment-row">
+              <select id="pref1Type"></select>
+              <input id="pref1FlourPct" type="number" min="0" max="60" step="1" value="25" aria-label="Mąka w zaczynie 1">
+              <input id="pref1Hydration" type="number" min="45" max="125" step="1" value="100" aria-label="Hydracja zaczynu 1">
+            </div>
+            <div class="preferment-row">
+              <select id="pref2Type"></select>
+              <input id="pref2FlourPct" type="number" min="0" max="60" step="1" value="0" aria-label="Mąka w zaczynie 2">
+              <input id="pref2Hydration" type="number" min="45" max="125" step="1" value="100" aria-label="Hydracja zaczynu 2">
+            </div>
+            <div class="preferment-row">
+              <select id="pref3Type"></select>
+              <input id="pref3FlourPct" type="number" min="0" max="60" step="1" value="0" aria-label="Mąka w zaczynie 3">
+              <input id="pref3Hydration" type="number" min="45" max="125" step="1" value="50" aria-label="Hydracja zaczynu 3">
+            </div>
+            <div class="preferment-head">
+              <span>typ</span><span>mąka %</span><span>hydracja %</span>
+            </div>
           </div>
-          <div class="grid-2">
-            <label>
-              Hydracja zaczynu (%)
-              <input id="prefermentHydration" type="number" min="45" max="125" step="1">
-            </label>
-            <label>
-              Dojrzałość zaczynu
-              <select id="starterStrength">
-                <option value="fast">mocny / aktywny</option>
-                <option value="normal" selected>normalny</option>
-                <option value="slow">słaby / zimny</option>
-              </select>
-            </label>
-          </div>
+          <label>
+            Siła fermentacji
+            <select id="starterStrength">
+              <option value="fast">mocna / aktywna</option>
+              <option value="normal" selected>normalna</option>
+              <option value="slow">słaba / zimna</option>
+            </select>
+          </label>
         </fieldset>
 
         <fieldset>
@@ -444,16 +474,20 @@
       flourRyeWhole: { label: "żytnia razowa", waterAdj: 14, timeAdj: 0.8, note: "bardzo chłonna, ciasto bardziej pastowate" }
     };
 
-    const preferments = {
+    const prefermentTypes = {
       sourdough100: { label: "zakwas 100%", hyd: 100, yeast: false, note: "klasyczny zakwas pszenny lub żytni" },
       stiffSourdough: { label: "sztywny zakwas / lievito madre", hyd: 50, yeast: false, note: "łagodniejszy profil, dobry do słodkich ciast" },
+      levain: { label: "levain pszenny", hyd: 100, yeast: false, note: "aktywny zaczyn pszenny, zwykle łagodniejszy niż żytni" },
+      ryeSourdough: { label: "zakwas żytni", hyd: 100, yeast: false, note: "mocny aromat i szybka fermentacja" },
       biga: { label: "biga drożdżowa", hyd: 50, yeast: true, note: "zwykle 12-18 h dojrzewania, sztywna struktura" },
       poolish: { label: "poolish drożdżowy", hyd: 100, yeast: true, note: "zwykle 8-16 h dojrzewania, płynny zaczyn" },
       none: { label: "bez zaczynu", hyd: 0, yeast: false, note: "liczy tylko ciasto właściwe" }
     };
 
     const flourMixIds = Object.keys(flourTypes);
-    const ids = ["product", "flour", "mixTotal", ...flourMixIds, "hydration", "enrichment", "preferment", "prefermentFlourPct", "prefermentHydration", "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
+    const prefermentRows = [1, 2, 3];
+    const prefermentIds = prefermentRows.flatMap(n => [`pref${n}Type`, `pref${n}FlourPct`, `pref${n}Hydration`]);
+    const ids = ["product", "flour", "mixTotal", ...flourMixIds, "hydration", "enrichment", ...prefermentIds, "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
     const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
 
     function optionList(select, data) {
@@ -477,11 +511,29 @@
     }
 
     function yeastDose(method, prefermentFlour, roomTemp) {
-      if (!preferments[method].yeast || prefermentFlour <= 0) return "-";
+      if (!prefermentTypes[method].yeast || prefermentFlour <= 0) return "-";
       const warmFactor = roomTemp >= 24 ? 0.7 : roomTemp <= 19 ? 1.4 : 1;
       const min = prefermentFlour * 0.001 * warmFactor;
       const max = prefermentFlour * 0.003 * warmFactor;
       return `${min.toFixed(1)}-${max.toFixed(1)} g świeżych drożdży albo ${(min / 3).toFixed(2)}-${(max / 3).toFixed(2)} g suchych`;
+    }
+
+    function prefermentMix(flour) {
+      const rows = prefermentRows.map(n => {
+        const typeKey = el[`pref${n}Type`].value;
+        const type = prefermentTypes[typeKey];
+        const pct = typeKey === "none" ? 0 : Math.max(0, number(`pref${n}FlourPct`));
+        const hydration = typeKey === "none" ? 0 : Math.max(0, number(`pref${n}Hydration`));
+        const prefermentFlour = flour * pct / 100;
+        const prefermentWater = prefermentFlour * hydration / 100;
+        return { ...type, typeKey, pct, hydration, flour: prefermentFlour, water: prefermentWater };
+      });
+      const active = rows.filter(row => row.flour > 0);
+      const flourTotal = active.reduce((sum, row) => sum + row.flour, 0);
+      const waterTotal = active.reduce((sum, row) => sum + row.water, 0);
+      const yeastFlour = active.filter(row => row.yeast).reduce((sum, row) => sum + row.flour, 0);
+      const averageHydration = flourTotal > 0 ? waterTotal / flourTotal * 100 : 0;
+      return { active, flourTotal, waterTotal, yeastFlour, averageHydration };
     }
 
     function flourMix() {
@@ -501,7 +553,6 @@
 
     function setDefaults() {
       const product = products[el.product.value];
-      const method = preferments[el.preferment.value];
       el.flourWhite.value = el.product.value === "ryeMix" ? 30 : 70;
       el.flourWhole.value = 0;
       el.flourRyeLight.value = el.product.value === "ryeMix" ? 70 : 30;
@@ -510,30 +561,34 @@
       el.hydration.value = product.hydration;
       el.enrichment.value = product.enrich;
       el.doughTemp.value = product.doughTemp;
-      el.prefermentFlourPct.value = product.prefPct;
-      el.prefermentHydration.value = method.hyd || product.prefHyd;
+      el.pref1Type.value = "sourdough100";
+      el.pref1FlourPct.value = product.prefPct;
+      el.pref1Hydration.value = product.prefHyd;
+      el.pref2Type.value = "none";
+      el.pref2FlourPct.value = 0;
+      el.pref2Hydration.value = 100;
+      el.pref3Type.value = "none";
+      el.pref3FlourPct.value = 0;
+      el.pref3Hydration.value = 50;
       calculate();
     }
 
     function calculate() {
       const product = products[el.product.value];
       const mix = flourMix();
-      const method = preferments[el.preferment.value];
       const flour = number("flour");
+      const preferment = prefermentMix(flour);
       const adjustedHydration = number("hydration") + mix.waterAdj;
       const enrichment = number("enrichment");
-      const prefermentPct = method === preferments.none ? 0 : number("prefermentFlourPct");
-      const prefermentHyd = method === preferments.none ? 0 : number("prefermentHydration");
-      const prefermentFlour = flour * prefermentPct / 100;
-      const prefermentWater = prefermentFlour * prefermentHyd / 100;
       const totalWater = flour * adjustedHydration / 100;
-      const finalWater = Math.max(totalWater - prefermentWater, 0);
-      const finalFlour = Math.max(flour - prefermentFlour, 0);
+      const finalWater = Math.max(totalWater - preferment.waterTotal, 0);
+      const finalFlour = Math.max(flour - preferment.flourTotal, 0);
       const salt = flour * product.salt / 100;
       const enrichGrams = flour * enrichment / 100;
       const desired = number("doughTemp");
-      const tempFactorCount = el.preferment.value === "none" ? 2 : 3;
-      const waterTemp = desired * tempFactorCount - number("flourTemp") - (el.preferment.value === "none" ? 0 : number("starterTemp")) - number("friction");
+      const hasPreferment = preferment.flourTotal > 0;
+      const tempFactorCount = hasPreferment ? 3 : 2;
+      const waterTemp = desired * tempFactorCount - number("flourTemp") - (hasPreferment ? number("starterTemp") : 0) - number("friction");
       const strengthFactor = { fast: 0.8, normal: 1, slow: 1.3 }[el.starterStrength.value];
       const room = number("roomTemp");
       const tempFactor = Math.pow(1.18, 22 - room);
@@ -553,17 +608,17 @@
 
       document.getElementById("ingredients").innerHTML = [
         ["Mąka razem", grams(flour), mix.active.map(item => `${item.label}: ${Math.round(item.share * 100)}%`).join(", ") || "wpisz udział mąk"],
-        ["Mąka w zaczynie", grams(prefermentFlour), method.note],
-        ["Woda w zaczynie", grams(prefermentWater), `${prefermentHyd}% hydracji zaczynu`],
+        ["Mąka w zaczynach", grams(preferment.flourTotal), preferment.active.map(row => `${row.label}: ${row.pct}%`).join(", ") || "bez zaczynu"],
+        ["Woda w zaczynach", grams(preferment.waterTotal), preferment.flourTotal > 0 ? `średnia hydracja ${Math.round(preferment.averageHydration)}%` : "bez zaczynu"],
         ["Mąka do ciasta właściwego", grams(finalFlour), "dodawana po dojrzeniu zaczynu"],
         ["Woda do ciasta właściwego", grams(finalWater), `${Math.round(adjustedHydration)}% hydracji po korekcie mąki`],
         ["Sól", grams(salt), `${product.salt}% względem mąki`],
         ["Tłuszcz/cukier/jajka razem", grams(enrichGrams), "pole do szacowania ciast wzbogaconych"],
-        ["Drożdże do bigi/poolish", yeastDose(el.preferment.value, prefermentFlour, room), "orientacyjnie dla zaczynu 8-18 h"]
+        ["Drożdże do bigi/poolish", preferment.yeastFlour > 0 ? yeastDose("biga", preferment.yeastFlour, room) : "-", "orientacyjnie dla zaczynu 8-18 h"]
       ].map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join("");
 
       document.getElementById("process").innerHTML = [
-        ["Dojrzewanie zaczynu", method.yeast ? "8-18 h w 18-22°C" : "4-12 h, zależnie od karmienia i temperatury", "aktywny, wyrośnięty, bez ostrego zapachu rozkładu"],
+        ["Dojrzewanie zaczynów", preferment.yeastFlour > 0 ? "8-18 h w 18-22°C dla bigi/poolish; zakwas według aktywności" : "4-12 h, zależnie od karmienia i temperatury", "aktywne, wyrośnięte, bez ostrego zapachu rozkładu"],
         ["Autoliza / odpoczynek", enrichment > 15 ? "10-20 min" : "20-45 min", "mąka nawodniona, ciasto mniej szorstkie"],
         ["Fermentacja wstępna", `${hours(bulk)} przy ok. ${room}°C`, product.note],
         ["Garowanie", `${hours(proof)} przy ok. ${room}°C`, "ciasto sprężyste, powoli wraca po naciśnięciu"],
@@ -572,6 +627,7 @@
 
       const warnings = [];
       if (Math.abs(mix.totalPct - 100) > 1) warnings.push("Suma mąk nie wynosi 100%, więc udziały zostały przeliczone proporcjonalnie.");
+      if (preferment.flourTotal > flour * 0.6) warnings.push("Zaczyny zawierają ponad 60% całej mąki. To możliwe, ale zwykle wymaga bardzo uważnego pilnowania fermentacji.");
       if (adjustedHydration >= 85 && mix.ryeShare < 0.3) warnings.push("To będzie luźne ciasto. Przyda się składanie i delikatne obchodzenie.");
       if (enrichment > 20) warnings.push("Ciasto wzbogacone będzie rosło wolniej. Zakwas powinien być łagodny i naprawdę aktywny.");
       if (waterTemp < 5) warnings.push("Wyliczona woda jest bardzo zimna. W praktyce schłódź mąkę albo obniż tarcie wyrabiania.");
@@ -581,14 +637,19 @@
     }
 
     optionList(el.product, products);
-    optionList(el.preferment, preferments);
+    prefermentRows.forEach(n => optionList(el[`pref${n}Type`], prefermentTypes));
     el.product.value = "country";
-    el.preferment.value = "sourdough100";
     setDefaults();
 
     ids.forEach(id => el[id].addEventListener("input", calculate));
     el.product.addEventListener("change", setDefaults);
-    el.preferment.addEventListener("change", setDefaults);
+    prefermentRows.forEach(n => {
+      el[`pref${n}Type`].addEventListener("change", () => {
+        const type = prefermentTypes[el[`pref${n}Type`].value];
+        if (type.hyd) el[`pref${n}Hydration`].value = type.hyd;
+        calculate();
+      });
+    });
     document.getElementById("reset").addEventListener("click", setDefaults);
     document.getElementById("print").addEventListener("click", () => window.print());
   </script>
