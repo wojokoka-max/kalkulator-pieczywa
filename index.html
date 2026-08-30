@@ -348,19 +348,9 @@
               </label>
             </div>
           </details>
-          <div class="grid-2">
-            <label>
-              Jakie ciasto?
-              <select id="doughFeel">
-                <option value="safe">łatwe do prowadzenia</option>
-                <option value="soft">bardziej miękkie i wilgotne</option>
-                <option value="open">luźne, mocniej nawodnione</option>
-              </select>
-            </label>
-            <label>
-              Hydracja, jeśli chcesz poprawić (%)
-              <input id="hydration" type="number" min="45" max="115" step="1">
-            </label>
+          <div class="calculated-note">
+            <strong>Hydratację dobierze kalkulator.</strong>
+            Uwzględni rodzaj wypieku oraz chłonność wybranej mieszanki mąk.
           </div>
           <div class="grid-2">
             <label>
@@ -547,7 +537,7 @@
     const flourMixIds = Object.keys(flourTypes);
     const prefermentRows = [1, 2, 3];
     const prefermentIds = prefermentRows.flatMap(n => [`pref${n}Type`, `pref${n}FlourPct`, `pref${n}Hydration`]);
-    const ids = ["product", "flour", "flourPreset", "mixTotal", ...flourMixIds, "doughFeel", "hydration", "enrichmentPreset", "enrichment", "prefermentPreset", ...prefermentIds, "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
+    const ids = ["product", "flour", "flourPreset", "mixTotal", ...flourMixIds, "enrichmentPreset", "enrichment", "prefermentPreset", ...prefermentIds, "starterStrength", "roomTemp", "flourTemp", "starterTemp", "friction", "doughTemp"];
     const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
 
     function optionList(select, data) {
@@ -569,12 +559,6 @@
         el[`pref${n}FlourPct`].value = row[1];
         el[`pref${n}Hydration`].value = row[2];
       });
-    }
-
-    function applyDoughFeel() {
-      const base = products[el.product.value].hydration;
-      const offset = { safe: -3, soft: 0, open: 6 }[el.doughFeel.value] || 0;
-      el.hydration.value = base + offset;
     }
 
     function number(id) {
@@ -646,8 +630,6 @@
       const product = products[el.product.value];
       el.flourPreset.value = el.product.value === "ryeMix" ? "rye" : "everyday";
       setFlourPreset(el.flourPreset.value);
-      el.doughFeel.value = "soft";
-      applyDoughFeel();
       el.enrichment.value = product.enrich;
       el.enrichmentPreset.value = String(product.enrich > 20 ? 25 : product.enrich > 0 ? 8 : 0);
       el.doughTemp.value = product.doughTemp;
@@ -663,7 +645,8 @@
       const mix = flourMix();
       const flour = number("flour");
       const preferment = prefermentMix(flour);
-      const adjustedHydration = number("hydration") + mix.waterAdj;
+      // Hydratacja jest dobierana z rodzaju wypieku i chłonności mieszanki.
+      const adjustedHydration = product.hydration + mix.waterAdj;
       const enrichment = number("enrichment");
       const totalWater = flour * adjustedHydration / 100;
       const finalWater = Math.max(totalWater - preferment.waterTotal, 0);
@@ -744,10 +727,6 @@
       calculate();
     });
     flourMixIds.forEach(id => el[id].addEventListener("input", () => { el.flourPreset.value = "custom"; }));
-    el.doughFeel.addEventListener("change", () => {
-      applyDoughFeel();
-      calculate();
-    });
     el.enrichmentPreset.addEventListener("change", () => {
       if (el.enrichmentPreset.value === "custom") return;
       el.enrichment.value = el.enrichmentPreset.value;
